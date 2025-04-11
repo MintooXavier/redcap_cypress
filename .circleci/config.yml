@@ -61,10 +61,10 @@ jobs:
           command: |
             cd /home/circleci/project/redcap_docker
             REDCAP_VERSION=${REDCAP_VERSION} docker-compose up -d
-      - run:
-          name: Install composer dependencies
-          command: |
-            docker exec -it redcap_docker-app-1 sh -c "cd /var/www/html/redcap_v${REDCAP_VERSION} && COMPOSER_DISABLE_XDEBUG_WARN=1 composer require --dev phpunit/php-code-coverage:^11"
+      # - run:
+      #     name: Install composer dependencies
+      #     command: |
+      #       docker exec -it redcap_docker-app-1 sh -c "cd /var/www/html/redcap_v${REDCAP_VERSION} && COMPOSER_DISABLE_XDEBUG_WARN=1 composer require --dev phpunit/php-code-coverage:^11"
       - run:
           name: Reload REDCap
           command: |
