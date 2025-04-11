@@ -1,52 +1,10 @@
-version: 2.1
-
- test:
-     docker:
-       - image: cypress/browsers:node-18.12.0-chrome-106  # Use a docker image that fits your needs
-     resource_class: large  # Now valid since you're using docker executor
-    environment:
-      REDCAP_VERSION: "15.0.9"
-
-workflows:
-  version: 2
-  workflows:
-    jobs:
-      - run-tests:
-          context: REDCap Tests
-      - html-reports:
-          context: REDCap Tests
-          requires:
-            - run-tests
-
-commands:
-  setup-redcap:
-    parameters:
-      dir:
-        type: string
-        default: "."
-    steps:
-      - add_ssh_keys
-      - run:
-          name: Build the REDCap Image
-          command: |
-            cd << parameters.dir >>
-            git clone --branch xdebug https://github.com/vanderbilt-redcap/redcap_docker
-      - run:
-          name: Get REDCap Source
-          command: |
-            cd << parameters.dir >>
-            mkdir redcap_source
-            cd redcap_source
-            git clone --depth=1 git@github.com:vanderbilt-redcap/REDCap.git redcap_v${REDCAP_VERSION}
-            cp -a redcap_v${REDCAP_VERSION}/Resources/install_files/redcap/* .
-            cp -a redcap_v${REDCAP_VERSION}/Resources/nonversioned_files/* .
-            cp ../.circleci/redcap_install_files/* .
+version: 2.0
 
 jobs:
-  run-tests:
-    executor: shared-executor
-    parallelism: 30
-    environment:
+  build:
+     machine:
+       image: ubuntu-2004:202201-02
+     parallelism: 6
     steps:
       - checkout
       - run:
@@ -54,110 +12,40 @@ jobs:
           command: |
             sudo apt-get update
             sudo apt-get install mysql-client-core-8.0
-      - setup-redcap
       - run:
-          name: Start Docker REDCap Container
+          name: Build the REDCap Image
           command: |
-            cd /home/circleci/project/redcap_docker
-            REDCAP_VERSION=${REDCAP_VERSION} docker-compose up -d
+            git clone https://github.com/vanderbilt-redcap/redcap_docker
       - run:
-          name: Install composer dependencies
+          name: Get REDCap Source
           command: |
-            docker exec -it redcap_docker-app-1 sh -c "cd /var/www/html/redcap_v${REDCAP_VERSION} && COMPOSER_DISABLE_XDEBUG_WARN=1 composer require --dev phpunit/php-code-coverage:^11"
-      - run:
-          name: Reload REDCap
-          command: |
-            cd /home/circleci/project/redcap_docker
-            docker-compose down && REDCAP_VERSION=${REDCAP_VERSION} docker-compose up -d
-      - run:
-          name: Permissions on coverage files
-          command: |
-            docker exec -it redcap_docker-app-1 sh -c "chmod 777 /tmp/path/coverage"
-      - run:
-          name: Change eDocs & Temp folder permissions
-          command: |
-            sudo chmod 777 /home/circleci/project/edocs
-            sudo chmod 777 /home/circleci/project/tmp
-      - run:
-          name: Configure Cypress environment
-          command: |
-            cd /home/circleci/project
-            sed s/PID/$PROJECT_ID/g cypress.config.js.example > cypress.config.js
-            mv cypress.env.json.example cypress.env.json
-            sed -i '/  "redcap_version": ".*",/c\  "redcap_version": "'${REDCAP_VERSION}'",' cypress.env.json
-      - run:
-          name: Install Cypress
-          command: |
-            export NVM_DIR="/opt/circleci/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm use stable
-            npm install
-            npm run redcap_rsvc:install
-      - run:
-          name: Run Tests
-          command: |
-            CYPRESS_prettyEnabled=true npx cypress run --record --key $RECORD_KEY --parallel --group core-tests --browser chrome || true
-      - run:
-          name: Coverage Report
-          command: |
-            docker exec -i redcap_docker-app-1 php /var/www/html/phpcov.phar merge --clover /tmp/path/coverage-report/merged-coverage-${CIRCLE_NODE_INDEX}.xml /tmp/path/coverage
-      - run:
-          name: Debug Workspace Contents
-          command: ls -l /home/circleci/project/coverage-report
-      - run:
-          name: Debug Cypress Videos
-          command: ls -l /home/circleci/project/cypress/videos
-      - persist_to_workspace:
-          root: .
-          paths:
-            - coverage-report
-            - coverage
-            - cypress/videos
-            - redcap_rsvc
-
-  html-reports:
-    executor: shared-executor
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /home/circleci/project/coverage
-      - setup-redcap:
-          dir: "/home/circleci/project/"
-      - run:
-          name: Push PASSED Videos to VUMC REDCap project
-          command: |
-            if git log -1 --pretty=%B | grep -q '\[video-upload\]'; then
-              echo "Attempting video upload to REDCap project ..."
-              cd /home/circleci/project/coverage/redcap_rsvc
-              node upload_videos_to_redcap_project.js $REDCAP_API_TOKEN $PROJECT_ID $REDCAP_API_URL
-            else
-              echo "Skipping video upload.  To push videos to project, use [video-upload] tag in your commit message."
-            fi          
+            git clone --branch redcap-cypress https://github.com/aldefouw/redcap_source
       - run:
           name: Start Docker REDCap Container
           command: |
             cd /home/circleci/project/redcap_docker
             docker-compose up -d
       - run:
-          name: Coverage Report
+          name: Change eDocs folder permissions
           command: |
-            docker exec -i redcap_docker-app-1 php /var/www/html/phpcov.phar merge --html /tmp/path/coverage-report/html-report /tmp/path/coverage
+            sudo chmod 777 /var/edocs
       - run:
-          name: Push to Repository
+          name: Configure Cypress environment
           command: |
             cd /home/circleci/project
-            GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa_dba1897a8caca68e1a8a5c2185311de3" git clone --depth=1 git@github.com:vanderbilt-redcap/redcap_cypress_build_reports.git
-            cd redcap_cypress_build_reports
-            sudo zip -r "html-report-${REDCAP_VERSION}.zip" ../coverage-report/html-report/*
-            git add "html-report-${REDCAP_VERSION}.zip"
-            git commit -m "Add latest HTML Report for version ${REDCAP_VERSION}"
-            GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa_dba1897a8caca68e1a8a5c2185311de3" git push
-
-      - store_artifacts:
-          path: /home/circleci/project/coverage/cypress/videos
-          destination: /home/circleci/project/coverage/cypress/videos
-
-      - persist_to_workspace:
-          root: .
-          paths:
-            - coverage-report
+            mv cypress.json.example > cypress.json
+            mv cypress.env.json.example cypress.env.json              
+      - run:
+          name: Install Cypress
+          command: |
+            npm install
+      - run:
+          name: Run Tests
+          command: |
+            npx cypress run
+workflows:
+  version: 2
+  workflow:
+    jobs:
+    - build:
+        context: REDCap Tests
