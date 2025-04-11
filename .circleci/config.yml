@@ -32,16 +32,16 @@ commands:
           command: |
             cd << parameters.dir >>
             git clone --branch xdebug https://github.com/vanderbilt-redcap/redcap_docker
-      - run:
-          name: Get REDCap Source
-          command: |
-            cd << parameters.dir >>
-            mkdir redcap_source
-            cd redcap_source
-            git clone --depth=1 git@github.com:vanderbilt-redcap/REDCap.git redcap_v${REDCAP_VERSION}
-            cp -a redcap_v${REDCAP_VERSION}/Resources/install_files/redcap/* .
-            cp -a redcap_v${REDCAP_VERSION}/Resources/nonversioned_files/* .
-            cp ../.circleci/redcap_install_files/* .
+      # - run:
+      #     name: Get REDCap Source
+      #     command: |
+      #       cd << parameters.dir >>
+      #       mkdir redcap_source
+      #       cd redcap_source
+      #       git clone --depth=1 git@github.com:vanderbilt-redcap/REDCap.git redcap_v${REDCAP_VERSION}
+      #       cp -a redcap_v${REDCAP_VERSION}/Resources/install_files/redcap/* .
+      #       cp -a redcap_v${REDCAP_VERSION}/Resources/nonversioned_files/* .
+      #       cp ../.circleci/redcap_install_files/* .
 
 jobs:
   run-tests:
