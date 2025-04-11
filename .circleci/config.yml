@@ -66,11 +66,11 @@ jobs:
       #     name: Install composer dependencies
       #     command: |
       #       docker exec -it redcap_docker-app-1 sh -c "cd /var/www/html/redcap_v${REDCAP_VERSION} && COMPOSER_DISABLE_XDEBUG_WARN=1 composer require --dev phpunit/php-code-coverage:^11"
-      - run:
-          name: Reload REDCap
-          command: |
-            cd /home/circleci/project/CCTC_REDCap_Docker
-            docker-compose down && ocker-compose up -d
+      # - run:
+      #     name: Reload REDCap
+      #     command: |
+      #       cd /home/circleci/project/CCTC_REDCap_Docker
+      #       docker-compose down && ocker-compose up -d
       # - run:
       #     name: Permissions on coverage files
       #     command: |
