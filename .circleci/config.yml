@@ -38,7 +38,7 @@ commands:
             cd << parameters.dir >>
             mkdir redcap_source
             cd redcap_source
-            git clone --depth=1 ggit@github.com:MintooXavier/redcap_source.git redcap_v${REDCAP_VERSION}
+            git clone --depth=1 git@github.com:MintooXavier/redcap_source.git redcap_v${REDCAP_VERSION}
             # cp -a redcap_v${REDCAP_VERSION}/Resources/install_files/redcap/* .
             # cp -a redcap_v${REDCAP_VERSION}/Resources/nonversioned_files/* .
             cp ../.circleci/redcap_install_files/* .
