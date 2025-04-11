@@ -1,13 +1,9 @@
 version: 2.1
 
-orbs:
-  codecov: codecov/codecov@4.0.1
-
-executors:
-  shared-executor:
-    machine:
-      image: ubuntu-2404:2024.11.1 # Machine image updates: https://circleci.com/developer/machine/image/ubuntu-2404
-      resource_class: large
+ test:
+     docker:
+       - image: cypress/browsers:node-18.12.0-chrome-106  # Use a docker image that fits your needs
+     resource_class: large  # Now valid since you're using docker executor
     environment:
       REDCAP_VERSION: "15.0.9"
 
