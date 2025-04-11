@@ -15,11 +15,11 @@ jobs:
       - run:
           name: Build the REDCap Image
           command: |
-            git clone --branch v9.1.3 https://github.com/aldefouw/redcap_docker
+            git clone https://github.com/vanderbilt-redcap/redcap_docker
       - run:
           name: Get REDCap Source
           command: |
-            git clone --branch redcap-cypress https://github.com/aldefouw/redcap_source www
+            git clone --branch redcap-cypress https://github.com/aldefouw/redcap_source
       - run:
           name: Start Docker REDCap Container
           command: |
@@ -33,19 +33,16 @@ jobs:
           name: Configure Cypress environment
           command: |
             cd /home/circleci/project
-            sed s/PID/$PROJECT_ID/g cypress.json.example > cypress.json
+            mv cypress.json.example > cypress.json
             mv cypress.env.json.example cypress.env.json              
       - run:
           name: Install Cypress
           command: |
-            export NVM_DIR="/opt/circleci/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm use stable
             npm install
       - run:
           name: Run Tests
           command: |
-            npx cypress run --record --key $RECORD_KEY --parallel --group core-tests
+            npx cypress run
 workflows:
   version: 2
   workflow:
