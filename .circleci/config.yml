@@ -41,7 +41,7 @@ commands:
             git clone git@github.com:MintooXavier/redcap_source.git
             # cp -a redcap_v${REDCAP_VERSION}/Resources/install_files/redcap/* .
             # cp -a redcap_v${REDCAP_VERSION}/Resources/nonversioned_files/* .
-            cp ../.circleci/redcap_install_files/* .
+            # cp ../.circleci/redcap_install_files/* .
 
 jobs:
   run-tests:
@@ -59,8 +59,8 @@ jobs:
       - run:
           name: Start Docker REDCap Container
           command: |
-            cd /home/circleci/project/redcap_docker
-            REDCAP_VERSION=${REDCAP_VERSION} docker-compose up -d
+            cd /home/circleci/project/CCTC_REDCap_Docker
+            docker-compose up -d
       # - run:
       #     name: Install composer dependencies
       #     command: |
@@ -68,12 +68,12 @@ jobs:
       - run:
           name: Reload REDCap
           command: |
-            cd /home/circleci/project/redcap_docker
-            docker-compose down && REDCAP_VERSION=${REDCAP_VERSION} docker-compose up -d
-      - run:
-          name: Permissions on coverage files
-          command: |
-            docker exec -it redcap_docker-app-1 sh -c "chmod 777 /tmp/path/coverage"
+            cd /home/circleci/project/CCTC_REDCap_Docker
+            docker-compose down && ocker-compose up -d
+      # - run:
+      #     name: Permissions on coverage files
+      #     command: |
+      #       docker exec -it redcap_docker-app-1 sh -c "chmod 777 /tmp/path/coverage"
       - run:
           name: Change eDocs & Temp folder permissions
           command: |
