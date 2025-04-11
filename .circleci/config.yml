@@ -31,7 +31,7 @@ commands:
           name: Build the REDCap Image
           command: |
             cd << parameters.dir >>
-            git clone --branch xdebug git@github.com:CCTC-team/CCTC_REDCap_Docker.git
+            git clone git@github.com:CCTC-team/CCTC_REDCap_Docker.git
       - run:
           name: Get REDCap Source
           command: |
